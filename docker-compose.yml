@@ -1,0 +1,73 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mremotify}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mremotify}
+      POSTGRES_DB: ${POSTGRES_DB:-mremotify}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER:-mremotify}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  rdpd:
+    build:
+      context: .
+      dockerfile: rdpd/Dockerfile
+    restart: unless-stopped
+    environment:
+      RDPD_LISTEN: 0.0.0.0:7777
+      RDPD_LOG_LEVEL: info
+    networks:
+      - internal
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_URL: postgresql://${POSTGRES_USER:-mremotify}:${POSTGRES_PASSWORD:-mremotify}@postgres:5432/${POSTGRES_DB:-mremotify}
+      RDPD_URL: ws://rdpd:7777
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rdpd:
+        condition: service_started
+    networks:
+      - internal
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    restart: unless-stopped
+    environment:
+      TLS_ENABLED: ${TLS_ENABLED:-false}
+      APP_HOSTNAME: ${APP_HOSTNAME:-localhost}
+      TLS_CERT_FILE: ${TLS_CERT_FILE:-}
+      TLS_KEY_FILE: ${TLS_KEY_FILE:-}
+      TLS_CERT_B64: ${TLS_CERT_B64:-}
+      TLS_KEY_B64: ${TLS_KEY_B64:-}
+    volumes:
+      - ${CERTS_DIR:-./.empty-certs}:/certs:ro
+    ports:
+      - '${HTTP_PORT:-80}:80'
+      - '${HTTPS_PORT:-443}:443'
+    depends_on:
+      - backend
+    networks:
+      - internal
+
+networks:
+  internal:
+
+volumes:
+  postgres_data:

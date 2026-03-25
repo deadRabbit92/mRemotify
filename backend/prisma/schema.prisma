@@ -1,0 +1,82 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_URL")
+}
+
+model User {
+  id           String       @id @default(cuid())
+  username     String       @unique
+  passwordHash String
+  createdAt    DateTime     @default(now())
+  folders      Folder[]
+  connections  Connection[]
+  profiles     Profile[]
+
+  @@map("users")
+}
+
+model Folder {
+  id           String       @id @default(cuid())
+  name         String
+  parentId     String?
+  parent       Folder?      @relation("FolderChildren", fields: [parentId], references: [id])
+  children     Folder[]     @relation("FolderChildren")
+  sshProfileId String?
+  sshProfile   Profile?     @relation("FolderSshProfile", fields: [sshProfileId], references: [id], onDelete: SetNull)
+  rdpProfileId String?
+  rdpProfile   Profile?     @relation("FolderRdpProfile", fields: [rdpProfileId], references: [id], onDelete: SetNull)
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connections  Connection[]
+  createdAt    DateTime     @default(now())
+
+  @@map("folders")
+}
+
+model Connection {
+  id                String   @id @default(cuid())
+  name              String
+  host              String
+  port              Int
+  protocol          String
+  username          String
+  encryptedPassword String?
+  privateKey        String?
+  domain            String?
+  osType            String?
+  notes             String?
+  clipboardEnabled  Boolean  @default(true)
+  folderId          String?
+  folder            Folder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  profileId         String?
+  profile           Profile? @relation(fields: [profileId], references: [id], onDelete: SetNull)
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now())
+
+  @@map("connections")
+}
+
+model Profile {
+  id                String       @id @default(cuid())
+  name              String
+  protocol          String
+  username          String?
+  encryptedPassword String?
+  privateKey        String?
+  domain            String?
+  clipboardEnabled  Boolean?
+  userId            String
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connections       Connection[]
+  foldersSsh        Folder[]     @relation("FolderSshProfile")
+  foldersRdp        Folder[]     @relation("FolderRdpProfile")
+  createdAt         DateTime     @default(now())
+
+  @@map("profiles")
+}

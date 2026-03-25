@@ -1,0 +1,297 @@
+/* ── Reset ── */
+* { box-sizing: border-box; }
+body { margin: 0; padding: 0; }
+
+/* ── Theme variables ── */
+:root {
+  --mr-accent: #0ea5a0;
+  --mr-accent-hover: #0cc0ba;
+  --mr-accent-subtle: rgba(14, 165, 160, 0.12);
+
+  /* Light theme */
+  --mr-bg-body: #f4f5f7;
+  --mr-bg-surface: #ffffff;
+  --mr-bg-sidebar: #ffffff;
+  --mr-bg-sidebar-hover: rgba(0,0,0,0.04);
+  --mr-bg-topbar: #151c25;
+  --mr-bg-input: #f0f1f3;
+  --mr-bg-empty: #fafafa;
+  --mr-border: #e2e4e8;
+  --mr-border-subtle: #edeef0;
+  --mr-text: #1a1d21;
+  --mr-text-secondary: #6b7280;
+  --mr-text-muted: #9ca3af;
+  --mr-text-on-dark: #d1d5db;
+  --mr-text-on-dark-strong: #f3f4f6;
+  --mr-splitter: #d5d7db;
+  --mr-splitter-hover: var(--mr-accent);
+  --mr-shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --mr-shadow-dropdown: 0 6px 20px rgba(0,0,0,0.10);
+  --mr-tree-selected: var(--mr-accent-subtle);
+  --mr-tab-active-border: var(--mr-accent);
+  --mr-properties-bg: var(--mr-bg-surface);
+  --mr-toolbar-bg: var(--mr-bg-surface);
+  --mr-toolbar-border: var(--mr-border);
+}
+
+[data-theme="dark"] {
+  --mr-bg-body: #0f1319;
+  --mr-bg-surface: #1a1f2b;
+  --mr-bg-sidebar: #111620;
+  --mr-bg-sidebar-hover: rgba(255,255,255,0.05);
+  --mr-bg-topbar: #0c1017;
+  --mr-bg-input: #232a38;
+  --mr-bg-empty: #141822;
+  --mr-border: #2a3040;
+  --mr-border-subtle: #222838;
+  --mr-text: #e4e6ea;
+  --mr-text-secondary: #8b95a5;
+  --mr-text-muted: #5a6577;
+  --mr-text-on-dark: #c0c7d2;
+  --mr-text-on-dark-strong: #e8ebf0;
+  --mr-splitter: #2a3040;
+  --mr-shadow-card: 0 1px 4px rgba(0,0,0,0.3);
+  --mr-shadow-dropdown: 0 6px 24px rgba(0,0,0,0.4);
+  --mr-tree-selected: rgba(14, 165, 160, 0.15);
+  --mr-properties-bg: var(--mr-bg-surface);
+  --mr-toolbar-bg: var(--mr-bg-surface);
+  --mr-toolbar-border: var(--mr-border);
+}
+
+body {
+  background: var(--mr-bg-body);
+  color: var(--mr-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Ant Design overrides ── */
+
+/* Tabs */
+.ant-tabs.ant-tabs-top {
+  display: flex;
+  flex-direction: column;
+}
+.ant-tabs-content-holder {
+  flex: 1;
+  overflow: hidden;
+}
+.ant-tabs-content {
+  height: 100%;
+}
+.ant-tabs-tabpane {
+  height: 100%;
+}
+
+/* Connection tree: compact spacing */
+.ant-tree .ant-tree-treenode {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+.ant-tree .ant-tree-switcher {
+  width: 16px !important;
+  min-width: 16px;
+}
+.ant-tree .ant-tree-node-content-wrapper {
+  display: inline-flex !important;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+  padding-left: 2px !important;
+}
+.ant-tree .ant-tree-iconEle {
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+.ant-tree .ant-tree-indent-unit {
+  width: 16px !important;
+}
+
+/* Sidebar tree: transparent background, inherits from sidebar */
+.sidebar-tree .ant-tree {
+  background: transparent;
+}
+.sidebar-tree .ant-tree .ant-tree-node-content-wrapper:hover {
+  background: var(--mr-bg-sidebar-hover);
+}
+.sidebar-tree .ant-tree .ant-tree-node-selected .ant-tree-node-content-wrapper,
+.sidebar-tree .ant-tree .ant-tree-node-content-wrapper-selected {
+  background: var(--mr-tree-selected) !important;
+}
+
+/* Sidebar tree: dark mode text overrides */
+[data-theme="dark"] .sidebar-tree .ant-tree {
+  color: var(--mr-text-on-dark);
+}
+[data-theme="dark"] .sidebar-tree .ant-tree .ant-tree-node-content-wrapper-normal,
+[data-theme="dark"] .sidebar-tree .ant-tree .ant-tree-node-content-wrapper-close,
+[data-theme="dark"] .sidebar-tree .ant-tree .ant-tree-node-content-wrapper-open {
+  color: var(--mr-text-on-dark);
+}
+[data-theme="dark"] .sidebar-tree .ant-tree .ant-tree-node-selected .ant-tree-node-content-wrapper,
+[data-theme="dark"] .sidebar-tree .ant-tree .ant-tree-node-content-wrapper-selected {
+  color: var(--mr-text-on-dark-strong);
+}
+[data-theme="dark"] .sidebar-tree .ant-tree .ant-tree-switcher {
+  color: var(--mr-text-muted);
+}
+[data-theme="dark"] .sidebar-tree .ant-tree .ant-tree-iconEle {
+  color: var(--mr-text-secondary);
+}
+
+/* Sidebar toolbar: dark mode overrides */
+[data-theme="dark"] .sidebar-toolbar .ant-btn {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.1);
+  color: var(--mr-text-on-dark);
+}
+[data-theme="dark"] .sidebar-toolbar .ant-btn:hover {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.15);
+  color: var(--mr-text-on-dark-strong);
+}
+[data-theme="dark"] .sidebar-toolbar .ant-input-affix-wrapper,
+[data-theme="dark"] .sidebar-toolbar .ant-input {
+  background: rgba(255,255,255,0.06) !important;
+  border-color: rgba(255,255,255,0.1) !important;
+  color: var(--mr-text-on-dark) !important;
+}
+[data-theme="dark"] .sidebar-toolbar .ant-input::placeholder {
+  color: var(--mr-text-muted) !important;
+}
+[data-theme="dark"] .sidebar-toolbar .ant-input-affix-wrapper .ant-input-clear-icon {
+  color: var(--mr-text-muted);
+}
+
+/* Splitter styling */
+.mr-splitter {
+  transition: background 0.15s ease;
+  background: var(--mr-splitter);
+}
+.mr-splitter:hover {
+  background: var(--mr-splitter-hover);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--mr-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--mr-text-muted);
+}
+
+/* Dark theme Ant Design integration */
+[data-theme="dark"] .ant-card {
+  background: var(--mr-bg-surface);
+  border-color: var(--mr-border);
+}
+[data-theme="dark"] .ant-input,
+[data-theme="dark"] .ant-input-affix-wrapper,
+[data-theme="dark"] .ant-select-selector,
+[data-theme="dark"] .ant-input-number {
+  background: var(--mr-bg-input) !important;
+  border-color: var(--mr-border) !important;
+  color: var(--mr-text) !important;
+}
+[data-theme="dark"] .ant-input::placeholder,
+[data-theme="dark"] .ant-input-number-input::placeholder {
+  color: var(--mr-text-muted) !important;
+}
+[data-theme="dark"] .ant-input:-webkit-autofill,
+[data-theme="dark"] .ant-input:-webkit-autofill:hover,
+[data-theme="dark"] .ant-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--mr-bg-input) inset !important;
+  -webkit-text-fill-color: var(--mr-text) !important;
+  caret-color: var(--mr-text) !important;
+}
+[data-theme="dark"] .ant-select-dropdown {
+  background: var(--mr-bg-surface);
+}
+[data-theme="dark"] .ant-dropdown-menu {
+  background: var(--mr-bg-surface);
+}
+[data-theme="dark"] .ant-dropdown-menu-item {
+  color: var(--mr-text);
+}
+[data-theme="dark"] .ant-dropdown-menu-item:hover {
+  background: var(--mr-accent-subtle);
+}
+[data-theme="dark"] .ant-form-item-label > label {
+  color: var(--mr-text-secondary) !important;
+}
+[data-theme="dark"] .ant-tabs-tab {
+  color: var(--mr-text-secondary) !important;
+}
+[data-theme="dark"] .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--mr-accent) !important;
+}
+[data-theme="dark"] .ant-tabs-ink-bar {
+  background: var(--mr-accent) !important;
+}
+[data-theme="dark"] .ant-modal-content {
+  background: var(--mr-bg-surface);
+}
+[data-theme="dark"] .ant-modal-header {
+  background: var(--mr-bg-surface);
+}
+[data-theme="dark"] .ant-typography {
+  color: var(--mr-text);
+}
+[data-theme="dark"] .ant-typography.ant-typography-secondary {
+  color: var(--mr-text-secondary) !important;
+}
+[data-theme="dark"] .ant-btn-default {
+  background: var(--mr-bg-input);
+  border-color: var(--mr-border);
+  color: var(--mr-text);
+}
+[data-theme="dark"] .ant-switch {
+  background: var(--mr-border);
+}
+[data-theme="dark"] .ant-divider {
+  border-color: var(--mr-border);
+}
+[data-theme="dark"] .ant-alert {
+  border-color: var(--mr-border);
+}
+[data-theme="dark"] .ant-tree {
+  color: var(--mr-text);
+}
+[data-theme="dark"] .ant-table {
+  background: var(--mr-bg-surface);
+  color: var(--mr-text);
+}
+[data-theme="dark"] .ant-table-thead > tr > th {
+  background: var(--mr-bg-input) !important;
+  color: var(--mr-text-secondary) !important;
+  border-color: var(--mr-border) !important;
+}
+[data-theme="dark"] .ant-table-tbody > tr > td {
+  border-color: var(--mr-border) !important;
+}
+[data-theme="dark"] .ant-table-tbody > tr:hover > td {
+  background: var(--mr-accent-subtle) !important;
+}
+[data-theme="dark"] .ant-table-cell-row-hover {
+  background: var(--mr-accent-subtle) !important;
+}
+[data-theme="dark"] .ant-breadcrumb-link,
+[data-theme="dark"] .ant-breadcrumb-separator {
+  color: var(--mr-text-secondary);
+}
+[data-theme="dark"] .ant-breadcrumb-link a {
+  color: var(--mr-text) !important;
+}
+[data-theme="dark"] .ant-empty-description {
+  color: var(--mr-text-muted);
+}

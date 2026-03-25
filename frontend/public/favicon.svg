@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#1a1a2e"/>
+  <g fill="none" stroke="#4fc3f7" stroke-width="28" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Terminal bracket left -->
+    <polyline points="140,160 90,256 140,352"/>
+    <!-- Terminal bracket right -->
+    <polyline points="372,160 422,256 372,352"/>
+    <!-- Connection line -->
+    <line x1="200" y1="280" x2="312" y2="232" stroke="#e0e0e0" stroke-width="20"/>
+    <!-- Dots representing nodes -->
+  </g>
+  <circle cx="196" cy="284" r="22" fill="#4fc3f7"/>
+  <circle cx="316" cy="228" r="22" fill="#4fc3f7"/>
+</svg>
