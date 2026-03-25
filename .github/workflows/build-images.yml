@@ -7,15 +7,28 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_BASE: ghcr.io/${{ github.repository_owner }}/mremotify
 
 permissions:
   contents: read
   packages: write
 
 jobs:
-  build-backend:
+  set-image-base:
     runs-on: ubuntu-latest
+    outputs:
+      image_base: ${{ steps.lower.outputs.image_base }}
+    steps:
+      - name: Lowercase image base
+        id: lower
+        run: echo "image_base=ghcr.io/${OWNER,,}/mremotify" >> "$GITHUB_OUTPUT"
+        env:
+          OWNER: ${{ github.repository_owner }}
+
+  build-backend:
+    needs: set-image-base
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_BASE: ${{ needs.set-image-base.outputs.image_base }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,7 +60,10 @@ jobs:
           cache-to: type=gha,mode=max
 
   build-frontend:
+    needs: set-image-base
     runs-on: ubuntu-latest
+    env:
+      IMAGE_BASE: ${{ needs.set-image-base.outputs.image_base }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -81,7 +97,10 @@ jobs:
           cache-to: type=gha,mode=max
 
   build-rdpd:
+    needs: set-image-base
     runs-on: ubuntu-latest
+    env:
+      IMAGE_BASE: ${{ needs.set-image-base.outputs.image_base }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
