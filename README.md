@@ -32,10 +32,20 @@ Manage SSH and RDP connections through a web UI with a tree-based layout, tabbed
 - **Built-in TLS** — serve HTTPS directly without an external reverse proxy; configured via environment variables
 - **PWA installable** — install mRemotify as a standalone desktop app from the browser (requires HTTPS)
 
+## Screenshots
+
+| Login (dark) | Login (light) |
+|:---:|:---:|
+| ![Login dark](docs/screenshots/login-dark.png) | ![Login light](docs/screenshots/login-light.png) |
+
+| SSH Session | Connection Profiles | User Menu |
+|:---:|:---:|:---:|
+| ![SSH session](docs/screenshots/ssh-session.png) | ![Connection Profiles](docs/screenshots/connection-profiles.png) | ![User menu](docs/screenshots/user-menu.png) |
+
 ## Quick start (Docker Compose)
 
 ```bash
-git clone https://github.com/yourname/mremotify.git
+git clone https://github.com/deadRabbit92/mRemotify.git
 cd mremotify
 
 cp .env.example .env
