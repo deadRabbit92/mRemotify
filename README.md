@@ -4,7 +4,7 @@ Some time ago when Windows 11 came up, I got so annoyed with that OS and Microso
 I finally started to migrate also for work to Ubuntu. I needed a replacement for my mRemoteNG that was my main remote session manager.
 So I decided to create my own. Right now, I wouldnt suggest to run it on a public facing VPS, just run it locally using docker compose and you are fine.
 
-I've added a weired local network range to docker-compose.yml with static IPs for containers, so you can use the 10.255.255.250 in your host entry to get certificate and PWA working.
+I've added a weird local network range to docker-compose.yml with static IPs for containers, so you can use the 10.255.255.250 in your host entry to get certificate and PWA working.
 
 Enjoy.
 
