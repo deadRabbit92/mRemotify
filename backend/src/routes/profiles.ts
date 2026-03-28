@@ -14,6 +14,7 @@ interface ProfileBody {
   privateKey?: string;
   domain?: string;
   clipboardEnabled?: boolean;
+  scrollbackLines?: number | null;
 }
 
 export async function profileRoutes(fastify: FastifyInstance) {
@@ -32,6 +33,7 @@ export async function profileRoutes(fastify: FastifyInstance) {
         username: true,
         domain: true,
         clipboardEnabled: true,
+        scrollbackLines: true,
         privateKey: true,
         encryptedPassword: true,
         createdAt: true,
@@ -58,6 +60,7 @@ export async function profileRoutes(fastify: FastifyInstance) {
         username: true,
         domain: true,
         clipboardEnabled: true,
+        scrollbackLines: true,
         privateKey: true,
         encryptedPassword: true,
         createdAt: true,
@@ -92,6 +95,7 @@ export async function profileRoutes(fastify: FastifyInstance) {
         username: true,
         domain: true,
         clipboardEnabled: true,
+        scrollbackLines: true,
         createdAt: true,
       },
     });
@@ -128,6 +132,7 @@ export async function profileRoutes(fastify: FastifyInstance) {
           username: true,
           domain: true,
           clipboardEnabled: true,
+          scrollbackLines: true,
           createdAt: true,
         },
       });

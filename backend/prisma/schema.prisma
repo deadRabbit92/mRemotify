@@ -51,6 +51,7 @@ model Connection {
   osType            String?
   notes             String?
   clipboardEnabled  Boolean  @default(true)
+  scrollbackLines   Int?
   folderId          String?
   folder            Folder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
   profileId         String?
@@ -71,6 +72,7 @@ model Profile {
   privateKey        String?
   domain            String?
   clipboardEnabled  Boolean?
+  scrollbackLines   Int?
   userId            String
   user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   connections       Connection[]

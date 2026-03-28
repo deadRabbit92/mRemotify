@@ -53,6 +53,7 @@ export const ConnectionModal: React.FC<Props> = ({
           osType: connection.osType ?? undefined,
           notes: connection.notes ?? undefined,
           clipboardEnabled: connection.clipboardEnabled !== false,
+          scrollbackLines: connection.scrollbackLines ?? undefined,
           folderId: connection.folderId ?? null,
           profileId: connection.profileId ?? null,
         });
@@ -172,6 +173,16 @@ export const ConnectionModal: React.FC<Props> = ({
         {protocol === 'ssh' && (
           <Form.Item label="Private Key" name="privateKey" extra="PEM-formatted SSH private key">
             <TextArea rows={4} placeholder="-----BEGIN OPENSSH PRIVATE KEY-----" />
+          </Form.Item>
+        )}
+
+        {protocol === 'ssh' && (
+          <Form.Item
+            label="Scrollback Lines"
+            name="scrollbackLines"
+            extra="Number of lines you can scroll back. Leave empty to use profile default (1000)."
+          >
+            <InputNumber min={0} max={100000} style={{ width: '100%' }} placeholder="1000" />
           </Form.Item>
         )}
 

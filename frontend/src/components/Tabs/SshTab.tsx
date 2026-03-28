@@ -19,16 +19,44 @@ function getWsUrl(connectionId: string, token: string): string {
 export const SshTab: React.FC<Props> = ({ session }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const token = useStore((s) => s.token) ?? '';
+  const profiles = useStore((s) => s.profiles);
+  const folders = useStore((s) => s.folders);
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+
+    // Resolve scrollback: connection override > profile > folder-inherited profile > default
+    const conn = session.connection;
+    let scrollback = conn.scrollbackLines;
+    if (scrollback == null && conn.profileId) {
+      const profile = profiles.find((p) => p.id === conn.profileId);
+      scrollback = profile?.scrollbackLines ?? null;
+    }
+    if (scrollback == null && conn.folderId) {
+      // Walk up folder tree to find inherited SSH profile
+      const folderMap = new Map(folders.map((f) => [f.id, f]));
+      let currentId: string | null | undefined = conn.folderId;
+      while (currentId) {
+        const folder = folderMap.get(currentId);
+        if (!folder) break;
+        if (folder.sshProfileId) {
+          const inherited = profiles.find((p) => p.id === folder.sshProfileId);
+          if (inherited?.scrollbackLines != null) {
+            scrollback = inherited.scrollbackLines;
+            break;
+          }
+        }
+        currentId = folder.parentId;
+      }
+    }
 
     // --- Terminal setup ---
     const terminal = new Terminal({
       cursorBlink: true,
       fontFamily: 'Menlo, Consolas, "Courier New", monospace',
       fontSize: 14,
+      scrollback: scrollback ?? 1000,
       theme: {
         background: '#1a1a2e',
         foreground: '#e0e0e0',
@@ -197,6 +225,7 @@ export const SshTab: React.FC<Props> = ({ session }) => {
       ws.close();
       terminal.dispose();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- profiles/folders only needed at mount for scrollback resolution
   }, [session.connection.id, token]);
 
   return (

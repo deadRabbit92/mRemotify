@@ -18,6 +18,7 @@ interface ConnectionBody {
   osType?: string;
   notes?: string;
   clipboardEnabled?: boolean;
+  scrollbackLines?: number | null;
   folderId?: string | null;
   profileId?: string | null;
 }
@@ -42,6 +43,7 @@ export async function connectionRoutes(fastify: FastifyInstance) {
         osType: true,
         notes: true,
         clipboardEnabled: true,
+        scrollbackLines: true,
         folderId: true,
         profileId: true,
         createdAt: true,
@@ -67,6 +69,7 @@ export async function connectionRoutes(fastify: FastifyInstance) {
         osType: true,
         notes: true,
         clipboardEnabled: true,
+        scrollbackLines: true,
         folderId: true,
         profileId: true,
         privateKey: true,
@@ -106,6 +109,7 @@ export async function connectionRoutes(fastify: FastifyInstance) {
         osType: true,
         notes: true,
         clipboardEnabled: true,
+        scrollbackLines: true,
         folderId: true,
         profileId: true,
         createdAt: true,
@@ -147,6 +151,7 @@ export async function connectionRoutes(fastify: FastifyInstance) {
           osType: true,
           notes: true,
           clipboardEnabled: true,
+          scrollbackLines: true,
           folderId: true,
           profileId: true,
           createdAt: true,

@@ -6,6 +6,7 @@ interface ProfileData {
   privateKey: string | null;
   domain: string | null;
   clipboardEnabled: boolean | null;
+  scrollbackLines: number | null;
 }
 
 interface FolderWithProfiles {
@@ -23,6 +24,7 @@ interface ConnectionWithProfile {
   privateKey: string | null;
   domain: string | null;
   clipboardEnabled: boolean;
+  scrollbackLines: number | null;
   protocol: string;
   folderId: string | null;
   profile: ProfileData | null;
@@ -35,6 +37,7 @@ export interface ResolvedCredentials {
   privateKey: string | null;
   domain: string;
   clipboardEnabled: boolean;
+  scrollbackLines: number | null;
 }
 
 /**
@@ -91,5 +94,6 @@ export function resolveCredentials(
         : null,
     domain: connection.domain || profile?.domain || '',
     clipboardEnabled: connection.clipboardEnabled ?? profile?.clipboardEnabled ?? true,
+    scrollbackLines: connection.scrollbackLines ?? profile?.scrollbackLines ?? null,
   };
 }

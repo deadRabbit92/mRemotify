@@ -6,6 +6,7 @@ import {
   Modal,
   Form,
   Input,
+  InputNumber,
   Select,
   Switch,
   Tag,
@@ -62,6 +63,7 @@ export const ProfileManager: React.FC = () => {
       username: profile.username ?? undefined,
       domain: profile.domain ?? undefined,
       clipboardEnabled: profile.clipboardEnabled !== false,
+      scrollbackLines: profile.scrollbackLines ?? undefined,
     });
     setModalOpen(true);
   };
@@ -212,6 +214,16 @@ export const ProfileManager: React.FC = () => {
           {protocol === 'ssh' && (
             <Form.Item label="Private Key" name="privateKey" extra="PEM-formatted SSH private key">
               <TextArea rows={3} placeholder="-----BEGIN OPENSSH PRIVATE KEY-----" />
+            </Form.Item>
+          )}
+
+          {protocol === 'ssh' && (
+            <Form.Item
+              label="Scrollback Lines"
+              name="scrollbackLines"
+              extra="Default scrollback for connections using this profile. Leave empty for 1000."
+            >
+              <InputNumber min={0} max={100000} style={{ width: '100%' }} placeholder="1000" />
             </Form.Item>
           )}
 

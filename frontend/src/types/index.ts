@@ -24,6 +24,7 @@ export interface Connection {
   osType?: string | null;
   notes?: string | null;
   clipboardEnabled?: boolean;
+  scrollbackLines?: number | null;
   folderId?: string | null;
   profileId?: string | null;
   privateKey?: string | null;
@@ -42,6 +43,7 @@ export interface ConnectionFormValues {
   osType?: string;
   notes?: string;
   clipboardEnabled?: boolean;
+  scrollbackLines?: number | null;
   folderId?: string | null;
   profileId?: string | null;
 }
@@ -53,6 +55,7 @@ export interface Profile {
   username?: string | null;
   domain?: string | null;
   clipboardEnabled?: boolean | null;
+  scrollbackLines?: number | null;
   hasPassword?: boolean;
   hasPrivateKey?: boolean;
   createdAt: string;
@@ -66,6 +69,7 @@ export interface ProfileFormValues {
   privateKey?: string;
   domain?: string;
   clipboardEnabled?: boolean;
+  scrollbackLines?: number | null;
 }
 
 export interface Session {
