@@ -1,5 +1,14 @@
 # mRemotify
 
+Some time ago when Windows 11 came up, I got so annoyed with that OS and Microsoft.
+I finally started to migrate also for work to Ubuntu. I needed a replacement for my mRemoteNG that was my main remote session manager.
+So I decided to create my own. Right now, I wouldnt suggest to run it on a public facing VPS, just run it locally using docker compose and you are fine.
+
+I've added a weired local network range to docker-compose.yml with static IPs for containers, so you can use the 10.255.255.250 in your host entry to get certificate and PWA working.
+
+Enjoy.
+
+
 Browser-based remote connection manager — open-source alternative to mRemoteNG.
 
 Manage SSH and RDP connections through a web UI with a tree-based layout, tabbed sessions, and connection profiles.
@@ -171,10 +180,11 @@ sudo chown $USER:$USER ~/mremotify-certs/*
 
 ```bash
 # /etc/hosts (Linux/macOS) or C:\Windows\System32\drivers\etc\hosts (Windows)
-192.168.1.100  mremotify.example.com
+10.255.255.250  mremotify.example.com
 ```
 
-Replace `192.168.1.100` with the actual LAN IP of the machine running mRemotify.
+Replace `10.255.255.250` is the static container IP of the mRemotify frontend.
+That way this can stay static, but it will only work locally. Which is intended right now.
 
 **4. Configure `.env`:**
 
