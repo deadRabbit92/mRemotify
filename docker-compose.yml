@@ -18,9 +18,7 @@ services:
       retries: 10
 
   rdpd:
-    build:
-      context: .
-      dockerfile: rdpd/Dockerfile
+    image: ghcr.io/deadrabbit92/mremotify/rdpd:latest
     restart: unless-stopped
     environment:
       RDPD_LISTEN: 0.0.0.0:7777
@@ -30,9 +28,7 @@ services:
         ipv4_address: 10.255.255.252
 
   backend:
-    build:
-      context: .
-      dockerfile: docker/backend.Dockerfile
+    image: ghcr.io/deadrabbit92/mremotify/backend:latest
     restart: unless-stopped
     env_file: .env
     environment:
@@ -48,9 +44,7 @@ services:
         ipv4_address: 10.255.255.251
 
   frontend:
-    build:
-      context: .
-      dockerfile: docker/frontend.Dockerfile
+    image: ghcr.io/deadrabbit92/mremotify/frontend:latest
     restart: unless-stopped
     environment:
       TLS_ENABLED: ${TLS_ENABLED:-false}
