@@ -389,7 +389,7 @@ async fn handle_input(
         ClientMessage::KeyUp { keySym } => input.key_up(keySym),
         ClientMessage::ClipboardWrite { text } => {
             if clipboard_enabled {
-                input.set_clipboard(display_num, &text)
+                input.set_clipboard(display_num, &text).await
             } else {
                 Ok(())
             }

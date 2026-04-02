@@ -86,6 +86,12 @@ function getKeySym(e: KeyboardEvent): number | null {
   return null;
 }
 
+// Module-level shared clipboard: stores the last clipboard text received from
+// any RDP session. This enables cross-session clipboard (copy in session A,
+// paste in session B) and acts as a fallback when navigator.clipboard.writeText
+// fails due to missing user gesture or insecure context.
+let sharedClipboardText = '';
+
 function getWsUrl(connectionId: string, token: string): string {
   const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const host = window.location.host;
@@ -200,11 +206,17 @@ export const RdpTab: React.FC<Props> = ({ session }) => {
               setErrorMsg(msg.message || 'Unknown error');
               break;
             case 'clipboardRead':
-              // Write remote clipboard content to local clipboard
-              if (msg.text && navigator.clipboard) {
-                navigator.clipboard.writeText(msg.text).catch(() => {
-                  // Clipboard write may fail without user gesture
-                });
+              // Store in shared variable for cross-session clipboard and
+              // as fallback when navigator.clipboard.writeText fails
+              if (msg.text) {
+                sharedClipboardText = msg.text;
+                if (navigator.clipboard) {
+                  navigator.clipboard.writeText(msg.text).catch(() => {
+                    // Clipboard write may fail without user gesture —
+                    // sharedClipboardText ensures the content is still
+                    // available for paste in any session
+                  });
+                }
               }
               break;
           }
@@ -271,25 +283,35 @@ export const RdpTab: React.FC<Props> = ({ session }) => {
 
     // --- Keyboard event handlers ---
     const onKeyDown = (e: KeyboardEvent) => {
-      // Ctrl+V / Cmd+V: read local clipboard → send to remote → then forward keystroke
+      // Ctrl+V / Cmd+V: read local clipboard → send to remote → delay → forward keystroke
       if ((e.ctrlKey || e.metaKey) && e.code === 'KeyV') {
         e.preventDefault();
         e.stopPropagation();
-        navigator.clipboard.readText().then((text) => {
+
+        const ctrlKeySym = e.ctrlKey ? 0xffe3 : 0xffeb;
+        const injectPaste = (text: string) => {
           if (text) {
             sendJson({ type: 'clipboardWrite', text });
           }
-          // Forward Ctrl+V keystrokes after clipboard is set
-          sendJson({ type: 'keyDown', keySym: e.ctrlKey ? 0xffe3 : 0xffeb }); // Ctrl/Meta
-          sendJson({ type: 'keyDown', keySym: 0x76 }); // v
-          sendJson({ type: 'keyUp', keySym: 0x76 });
-          sendJson({ type: 'keyUp', keySym: e.ctrlKey ? 0xffe3 : 0xffeb });
+          // Delay Ctrl+V injection to give xfreerdp time to detect the
+          // X11 clipboard change and sync it to the RDP session. Without
+          // this, the keystroke arrives before the Windows-side clipboard
+          // has been updated, causing stale or empty paste.
+          setTimeout(() => {
+            sendJson({ type: 'keyDown', keySym: ctrlKeySym });
+            sendJson({ type: 'keyDown', keySym: 0x76 }); // v
+            sendJson({ type: 'keyUp', keySym: 0x76 });
+            sendJson({ type: 'keyUp', keySym: ctrlKeySym });
+          }, 150);
+        };
+
+        navigator.clipboard.readText().then((text) => {
+          // Use navigator clipboard if available, otherwise fall back to
+          // shared clipboard (enables cross-session copy/paste)
+          injectPaste(text || sharedClipboardText);
         }).catch(() => {
-          // Clipboard access denied — just forward the keystroke
-          sendJson({ type: 'keyDown', keySym: 0xffe3 });
-          sendJson({ type: 'keyDown', keySym: 0x76 });
-          sendJson({ type: 'keyUp', keySym: 0x76 });
-          sendJson({ type: 'keyUp', keySym: 0xffe3 });
+          // Clipboard access denied — use shared clipboard as fallback
+          injectPaste(sharedClipboardText);
         });
         return;
       }

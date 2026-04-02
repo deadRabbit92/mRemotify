@@ -208,38 +208,41 @@ impl InputInjector {
     /// Uses xsel which keeps the selection data in a background daemon,
     /// ensuring the clipboard content remains available for xfreerdp to read
     /// even after this function returns.
-    pub fn set_clipboard(&self, display_num: u32, text: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        use std::process::{Command, Stdio};
-        use std::io::Write;
-
+    ///
+    /// After setting the clipboard, sleeps briefly to give xfreerdp time to
+    /// detect the X11 SelectionNotify and sync the content to the RDP session
+    /// before any subsequent Ctrl+V keystroke is injected.
+    pub async fn set_clipboard(&self, display_num: u32, text: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let display = format!(":{}", display_num);
-
-        // Clear existing clipboard first to force xfreerdp to re-read
-        let _ = Command::new("xsel")
-            .args(["--clipboard", "--clear"])
-            .env("DISPLAY", &display)
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .status();
+        let text = text.to_string();
 
         // xsel --clipboard --input keeps a background daemon that owns the
         // CLIPBOARD selection persistently, unlike xclip which exits and
         // loses ownership. This ensures xfreerdp can read the new content
         // when it detects the selection change.
-        let mut child = Command::new("xsel")
+        let mut child = tokio::process::Command::new("xsel")
             .args(["--clipboard", "--input"])
             .env("DISPLAY", &display)
-            .stdin(Stdio::piped())
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
             .spawn()?;
 
         if let Some(ref mut stdin) = child.stdin {
-            stdin.write_all(text.as_bytes())?;
+            use tokio::io::AsyncWriteExt;
+            stdin.write_all(text.as_bytes()).await?;
         }
-        child.wait()?;
+        // Drop stdin so xsel sees EOF and processes the input
+        drop(child.stdin.take());
+        child.wait().await?;
 
         debug!(len = text.len(), "clipboard set via xsel");
+
+        // Wait for xfreerdp to detect the X11 SelectionNotify and sync the
+        // clipboard content to the RDP server. Without this delay, a Ctrl+V
+        // keystroke arriving immediately after would paste stale content.
+        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+
         Ok(())
     }
 }
