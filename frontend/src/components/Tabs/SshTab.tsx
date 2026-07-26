@@ -18,9 +18,15 @@ function getWsUrl(connectionId: string, token: string): string {
 
 export const SshTab: React.FC<Props> = ({ session }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const terminalRef = useRef<Terminal | null>(null);
+  const safeFitRef = useRef<(() => void) | null>(null);
   const token = useStore((s) => s.token) ?? '';
   const profiles = useStore((s) => s.profiles);
   const folders = useStore((s) => s.folders);
+  const isActive = useStore((s) => s.activeSessionId === session.id);
+  // Reordering tabs moves this pane's DOM node, which blurs the terminal inside
+  // it — track our position so we can restore focus afterwards.
+  const tabIndex = useStore((s) => s.sessions.findIndex((x) => x.id === session.id));
 
   useEffect(() => {
     const container = containerRef.current;
@@ -67,10 +73,29 @@ export const SshTab: React.FC<Props> = ({ session }) => {
     const fitAddon = new FitAddon();
     terminal.loadAddon(fitAddon);
     terminal.open(container);
+    terminalRef.current = terminal;
+
+    // Only fit while the tab pane is actually visible.
+    // Inactive antd tab panes are hidden (display:none / zero height). FitAddon
+    // measures the parent with getComputedStyle, which for a hidden element
+    // returns the *specified* value ("100%" → parsed as 100px), so an unguarded
+    // fit() shrinks the terminal to a few columns and sends that size to the
+    // remote PTY — wrecking the output of anything running in a background tab.
+    const isVisible = () =>
+      container.isConnected && container.clientWidth > 0 && container.clientHeight > 0;
+
+    const safeFit = () => {
+      if (!isVisible()) return;
+      try {
+        fitAddon.fit();
+      } catch {
+        // ignore layout errors during unmount
+      }
+    };
+    safeFitRef.current = safeFit;
+
     // Defer initial fit to ensure the container has been fully laid out
-    requestAnimationFrame(() => {
-      fitAddon.fit();
-    });
+    requestAnimationFrame(safeFit);
 
     // --- PuTTY-style copy/paste ---
     // Select → auto-copy to clipboard
@@ -161,7 +186,7 @@ export const SshTab: React.FC<Props> = ({ session }) => {
       if (firstData) {
         firstData = false;
         requestAnimationFrame(() => {
-          fitAddon.fit();
+          safeFit();
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(
               JSON.stringify({ type: 'resize', cols: terminal.cols, rows: terminal.rows })
@@ -207,13 +232,16 @@ export const SshTab: React.FC<Props> = ({ session }) => {
       }
     });
 
-    // Observe container size changes
+    // Observe container size changes. Coalesce bursts (e.g. sidebar drag) into
+    // one fit per frame so we don't spam the PTY with intermediate sizes.
+    let fitScheduled = false;
     const resizeObserver = new ResizeObserver(() => {
-      try {
-        fitAddon.fit();
-      } catch {
-        // ignore layout errors during unmount
-      }
+      if (fitScheduled) return;
+      fitScheduled = true;
+      requestAnimationFrame(() => {
+        fitScheduled = false;
+        safeFit();
+      });
     });
     resizeObserver.observe(container);
 
@@ -222,11 +250,29 @@ export const SshTab: React.FC<Props> = ({ session }) => {
       window.removeEventListener('keydown', handleBrowserShortcut, true);
       window.removeEventListener('beforeunload', handleBeforeUnload);
       resizeObserver.disconnect();
+      safeFitRef.current = null;
+      terminalRef.current = null;
       ws.close();
       terminal.dispose();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps -- profiles/folders only needed at mount for scrollback resolution
   }, [session.connection.id, token]);
+
+  // When this tab becomes active again its pane is re-shown (and a reorder moves
+  // it in the DOM). Re-fit — the window may have been resized while it was
+  // hidden — repaint the visible rows, and hand keyboard focus back.
+  useEffect(() => {
+    if (!isActive) return;
+    const raf = requestAnimationFrame(() => {
+      safeFitRef.current?.();
+      const terminal = terminalRef.current;
+      if (terminal) {
+        terminal.refresh(0, terminal.rows - 1);
+        terminal.focus();
+      }
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [isActive, tabIndex]);
 
   return (
     <div

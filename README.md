@@ -27,7 +27,7 @@ Manage SSH and RDP connections through a web UI with a tree-based layout, tabbed
 ## Features
 
 - **Connection tree** — folders with drag-and-drop, context menus, search
-- **Tabbed sessions** — each connection opens in its own tab
+- **Tabbed sessions** — each connection opens in its own tab; drag a tab left or right to reorder
 - **SSH terminal** — xterm.js over WebSocket, resize support
 - **RDP viewer** — canvas-based remote desktop via rdpd (JPEG frame streaming)
 - **SFTP file browser** — browse, upload, download, rename, and delete files over SFTP

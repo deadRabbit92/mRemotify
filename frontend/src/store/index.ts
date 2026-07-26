@@ -34,6 +34,7 @@ interface AppState {
   openSession: (connection: Connection, mode?: 'shell' | 'sftp', force?: boolean) => void;
   closeSession: (sessionId: string) => void;
   setActiveSession: (sessionId: string) => void;
+  moveSession: (sourceId: string, targetId: string, position: 'before' | 'after') => void;
   duplicateSession: (sessionId: string) => void;
   reconnectSession: (sessionId: string) => void;
 }
@@ -124,6 +125,24 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   setActiveSession: (sessionId) => set({ activeSessionId: sessionId }),
+
+  // Reorder tabs: move `sourceId` directly before or after `targetId`.
+  moveSession: (sourceId, targetId, position) => {
+    set((state) => {
+      if (sourceId === targetId) return {};
+      const from = state.sessions.findIndex((s) => s.id === sourceId);
+      const to = state.sessions.findIndex((s) => s.id === targetId);
+      if (from === -1 || to === -1) return {};
+
+      const sessions = [...state.sessions];
+      const [moved] = sessions.splice(from, 1);
+      // Re-locate the target after removal — its index shifts when the
+      // dragged tab came from its left.
+      const insertAt = sessions.findIndex((s) => s.id === targetId) + (position === 'after' ? 1 : 0);
+      sessions.splice(insertAt, 0, moved);
+      return { sessions };
+    });
+  },
 
   duplicateSession: (sessionId) => {
     const session = get().sessions.find((s) => s.id === sessionId);
