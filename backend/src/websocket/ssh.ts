@@ -149,19 +149,15 @@ export async function sshWebsocket(fastify: FastifyInstance) {
             ssh.end();
           });
 
-          // Replay any queued non-resize messages (resize already applied via initialCols/Rows)
+          // Replay every queued message, resizes included. The dimensions scanned
+          // above only cover what had arrived by the time we called ssh.shell();
+          // anything queued during the channel handshake still has to be applied,
+          // or the PTY stays at a stale width while the client renders at the new
+          // one — which silently mangles every wrapped line for the whole session.
           if (pendingMessages) {
             const queued = pendingMessages;
             pendingMessages = null;
             for (const pm of queued) {
-              if (!pm.isBinary) {
-                try {
-                  const msg = JSON.parse(pm.message.toString());
-                  if (msg.type === 'resize') continue; // already applied
-                } catch {
-                  // not JSON, replay as input
-                }
-              }
               handleMessage(pm.message, pm.isBinary);
             }
           }

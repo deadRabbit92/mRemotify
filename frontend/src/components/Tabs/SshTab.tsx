@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
@@ -19,7 +19,9 @@ function getWsUrl(connectionId: string, token: string): string {
 export const SshTab: React.FC<Props> = ({ session }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<Terminal | null>(null);
-  const safeFitRef = useRef<(() => void) | null>(null);
+  const resyncSizeRef = useRef<(() => void) | null>(null);
+  // Transient "cols × rows" badge, shown briefly whenever the terminal resizes
+  const [sizeBadge, setSizeBadge] = useState<{ cols: number; rows: number } | null>(null);
   const token = useStore((s) => s.token) ?? '';
   const profiles = useStore((s) => s.profiles);
   const folders = useStore((s) => s.folders);
@@ -92,7 +94,6 @@ export const SshTab: React.FC<Props> = ({ session }) => {
         // ignore layout errors during unmount
       }
     };
-    safeFitRef.current = safeFit;
 
     // Defer initial fit to ensure the container has been fully laid out
     requestAnimationFrame(safeFit);
@@ -186,12 +187,10 @@ export const SshTab: React.FC<Props> = ({ session }) => {
       if (firstData) {
         firstData = false;
         requestAnimationFrame(() => {
-          safeFit();
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(
-              JSON.stringify({ type: 'resize', cols: terminal.cols, rows: terminal.rows })
-            );
-          }
+          resyncSize();
+          // From here on the session is established, so a resize is worth
+          // reporting — don't flash the badge for the initial fit.
+          badgeEnabled = true;
         });
       }
     });
@@ -225,11 +224,39 @@ export const SshTab: React.FC<Props> = ({ session }) => {
       }
     });
 
+    // Push the terminal's current size to the remote PTY.
+    const sendSize = () => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(
+          JSON.stringify({ type: 'resize', cols: terminal.cols, rows: terminal.rows })
+        );
+      }
+    };
+
+    // Re-fit and re-assert the size unconditionally. onResize only fires when the
+    // size actually changes, so a single missed message — a fit skipped while the
+    // pane was hidden, or a resize while the socket was still connecting — would
+    // otherwise leave the PTY permanently wider than what we render. The remote
+    // then emits lines too long for our viewport, we wrap them, and every \r it
+    // sends lands at the start of the wrapped tail instead of the real line start.
+    const resyncSize = () => {
+      safeFit();
+      sendSize();
+    };
+    resyncSizeRef.current = resyncSize;
+
     // Resize → WS (JSON text frame)
+    let badgeTimer: ReturnType<typeof setTimeout> | null = null;
+    let badgeEnabled = false;
     terminal.onResize(({ cols, rows }) => {
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: 'resize', cols, rows }));
       }
+      // Show the new geometry briefly, the way a desktop terminal does
+      if (!badgeEnabled) return;
+      setSizeBadge({ cols, rows });
+      if (badgeTimer) clearTimeout(badgeTimer);
+      badgeTimer = setTimeout(() => setSizeBadge(null), 1500);
     });
 
     // Observe container size changes. Coalesce bursts (e.g. sidebar drag) into
@@ -250,7 +277,8 @@ export const SshTab: React.FC<Props> = ({ session }) => {
       window.removeEventListener('keydown', handleBrowserShortcut, true);
       window.removeEventListener('beforeunload', handleBeforeUnload);
       resizeObserver.disconnect();
-      safeFitRef.current = null;
+      if (badgeTimer) clearTimeout(badgeTimer);
+      resyncSizeRef.current = null;
       terminalRef.current = null;
       ws.close();
       terminal.dispose();
@@ -264,7 +292,7 @@ export const SshTab: React.FC<Props> = ({ session }) => {
   useEffect(() => {
     if (!isActive) return;
     const raf = requestAnimationFrame(() => {
-      safeFitRef.current?.();
+      resyncSizeRef.current?.();
       const terminal = terminalRef.current;
       if (terminal) {
         terminal.refresh(0, terminal.rows - 1);
@@ -275,14 +303,38 @@ export const SshTab: React.FC<Props> = ({ session }) => {
   }, [isActive, tabIndex]);
 
   return (
-    <div
-      ref={containerRef}
-      style={{
-        width: '100%',
-        height: '100%',
-        background: '#1a1a2e',
-        overflow: 'hidden',
-      }}
-    />
+    <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
+      {/* xterm owns this element's children — keep React out of it */}
+      <div
+        ref={containerRef}
+        style={{
+          width: '100%',
+          height: '100%',
+          background: '#1a1a2e',
+          overflow: 'hidden',
+        }}
+      />
+      {sizeBadge && (
+        <div
+          style={{
+            position: 'absolute',
+            right: 14,
+            bottom: 12,
+            padding: '3px 9px',
+            borderRadius: 4,
+            background: 'rgba(0, 0, 0, 0.72)',
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            color: '#e0e0e0',
+            fontFamily: 'Menlo, Consolas, "Courier New", monospace',
+            fontSize: 12,
+            lineHeight: 1.6,
+            pointerEvents: 'none',
+            userSelect: 'none',
+          }}
+        >
+          {sizeBadge.cols} × {sizeBadge.rows}
+        </div>
+      )}
+    </div>
   );
 };
