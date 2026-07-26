@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
-import { ConfigProvider, theme } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { ConfigProvider, Spin, theme } from 'antd';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useStore } from './store';
+import { apiMe } from './api/client';
 import { LoginPage } from './pages/LoginPage';
 import { MainLayout } from './components/Layout/MainLayout';
 import { ImportExportPage } from './pages/settings/ImportExportPage';
@@ -23,6 +24,36 @@ const AuthenticatedRoutes: React.FC = () => (
 const App: React.FC = () => {
   const token = useStore((s) => s.token);
   const darkMode = useStore((s) => s.darkMode);
+  const setAuth = useStore((s) => s.setAuth);
+
+  // The token in localStorage survives its own expiry, so verify it before
+  // mounting anything that talks to the API — otherwise a stale token renders
+  // the full UI and only then fails, one error toast per request.
+  const [verifying, setVerifying] = useState(!!token);
+
+  useEffect(() => {
+    const stored = useStore.getState().token;
+    if (!stored) return;
+
+    let cancelled = false;
+    apiMe()
+      .then(({ data }) => {
+        // Refresh the cached user while we're here
+        if (!cancelled) setAuth(stored, data);
+      })
+      .catch(() => {
+        // A 401 already cleared the session in the response interceptor. Any
+        // other failure (backend down) leaves the token alone — the app loads
+        // and reports the problem itself.
+      })
+      .finally(() => {
+        if (!cancelled) setVerifying(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [setAuth]);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
@@ -46,7 +77,23 @@ const App: React.FC = () => {
       }}
     >
       <BrowserRouter>
-        {token ? <AuthenticatedRoutes /> : <LoginPage />}
+        {verifying ? (
+          <div
+            style={{
+              height: '100vh',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'var(--mr-bg-body)',
+            }}
+          >
+            <Spin size="large" />
+          </div>
+        ) : token ? (
+          <AuthenticatedRoutes />
+        ) : (
+          <LoginPage />
+        )}
       </BrowserRouter>
     </ConfigProvider>
   );

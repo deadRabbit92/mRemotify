@@ -1,4 +1,6 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
+import { message } from 'antd';
+import { useStore } from '../store';
 import { Connection, ConnectionFormValues, Folder, Profile, ProfileFormValues, User } from '../types';
 
 const api = axios.create({ baseURL: '/api', timeout: 30000 });
@@ -9,6 +11,29 @@ api.interceptors.request.use((config) => {
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
+
+// These endpoints answer 401 for their own reasons — wrong credentials, wrong
+// current password — which the pages report inline. Only a 401 from anywhere
+// else means the session itself is gone.
+const OWN_401 = ['/auth/login', '/auth/change-password'];
+
+// An expired or invalid token drops the app back to the login page instead of
+// leaving it half-loaded behind a "failed to load" toast.
+api.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError) => {
+    const url = error.config?.url ?? '';
+    if (error.response?.status === 401 && !OWN_401.some((path) => url.startsWith(path))) {
+      // Only the first failure of a burst still sees a token, so parallel
+      // requests can't stack up duplicate warnings.
+      if (useStore.getState().token) {
+        message.warning('Your session has expired. Please sign in again.');
+        useStore.getState().logout();
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Auth
 export const apiLogin = (username: string, password: string) =>
