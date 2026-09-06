@@ -108,7 +108,7 @@ async fn handle_connection(
                 };
                 let _ = futures_util::SinkExt::send(
                     &mut ws,
-                    Message::Text(msg.to_json()),
+                    Message::text(msg.to_json()),
                 ).await;
                 return;
             }
@@ -119,7 +119,7 @@ async fn handle_connection(
                 };
                 let _ = futures_util::SinkExt::send(
                     &mut ws,
-                    Message::Text(msg.to_json()),
+                    Message::text(msg.to_json()),
                 ).await;
                 return;
             }

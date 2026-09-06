@@ -47,7 +47,7 @@ impl Session {
         // Helper to send a JSON control message
         let send_msg = |sink: WsSink, msg: ServerMessage| async move {
             let mut s = sink.lock().await;
-            let _ = s.send(Message::Text(msg.to_json())).await;
+            let _ = s.send(Message::text(msg.to_json())).await;
         };
 
         // 1. Start Xvnc (TigerVNC) — provides full RandR support for dynamic resize
@@ -235,7 +235,7 @@ impl Session {
                         let sink = frame_sink.clone();
                         rt.block_on(async {
                             let mut s = sink.lock().await;
-                            if s.send(Message::Binary(jpeg_bytes)).await.is_err() {
+                            if s.send(Message::binary(jpeg_bytes)).await.is_err() {
                                 // WebSocket closed
                             }
                         });
@@ -299,7 +299,7 @@ impl Session {
                     if let Ok(text) = String::from_utf8(output) {
                         debug!(len = text.len(), display = clip_display, "remote clipboard changed");
                         let mut s = clip_sink.lock().await;
-                        let _ = s.send(Message::Text(
+                        let _ = s.send(Message::text(
                             ServerMessage::ClipboardRead { text }.to_json()
                         )).await;
                     }
@@ -359,7 +359,7 @@ impl Session {
         // Send disconnected message
         {
             let mut s = sink.lock().await;
-            let _ = s.send(Message::Text(ServerMessage::Disconnected.to_json())).await;
+            let _ = s.send(Message::text(ServerMessage::Disconnected.to_json())).await;
             let _ = s.close().await;
         }
 

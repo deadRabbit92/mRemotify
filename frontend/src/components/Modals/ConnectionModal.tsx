@@ -107,7 +107,7 @@ export const ConnectionModal: React.FC<Props> = ({
           </Button>
         </Space>
       }
-      destroyOnClose
+      destroyOnHidden
     >
       <Form form={form} layout="vertical" requiredMark="optional" style={{ marginTop: 8 }}>
         <Form.Item label="Name" name="name" rules={[{ required: true, message: 'Required' }]}>

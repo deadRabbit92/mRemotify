@@ -1,19 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ---- Build stage ----
-FROM node:20-alpine AS builder
-
-# The Prisma CLI picks the engine binaries to download by probing the OpenSSL
-# version, which on Alpine means shelling out to `openssl version -v`. Without
-# the openssl package that probe fails and it silently falls back to the
-# `linux-musl` (OpenSSL 1.1) engines, while the runtime stage - which does have
-# openssl - resolves to `linux-musl-openssl-3.0.x` and tries to download the
-# missing engines from binaries.prisma.sh on every container start.
-# Installing openssl here and pinning the target keeps both stages in sync so
-# the engines are baked into the image and no download is needed at runtime.
-RUN apk add --no-cache openssl
-
-ENV PRISMA_CLI_BINARY_TARGETS=linux-musl-openssl-3.0.x
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 
@@ -24,30 +12,28 @@ RUN npm install
 # Copy backend source files
 COPY backend/prisma ./prisma
 COPY backend/src ./src
-COPY backend/tsconfig.json ./
+COPY backend/tsconfig.json backend/prisma.config.ts ./
 
-# Generate Prisma client and compile TypeScript
+# Prisma 7 emits the client as TypeScript source (see prisma/schema.prisma), so
+# it has to be generated before tsc runs — tsc then compiles it into dist/ along
+# with the rest of the backend. There are no Rust engine binaries to fetch: the
+# client talks to Postgres through the @prisma/adapter-pg driver adapter, which
+# is what retired the openssl/binaryTargets juggling this file used to need.
 RUN npx prisma generate
 RUN npx tsc
 
 # ---- Runtime stage ----
-FROM node:20-alpine AS runner
-
-# Prisma needs libssl on Alpine (musl)
-RUN apk add --no-cache openssl
+FROM node:24-alpine AS runner
 
 WORKDIR /app
 
-# Copy only production runtime artifacts
+# Copy runtime artifacts. node_modules carries the Prisma CLI too — the start
+# command below still runs `migrate deploy`.
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./
 COPY --from=builder /app/package.json ./
-
-# Fail the build - rather than the deployment - if the engines the CLI and the
-# client need at runtime did not end up in the image.
-RUN test -f node_modules/@prisma/engines/schema-engine-linux-musl-openssl-3.0.x \
- && test -f node_modules/.prisma/client/libquery_engine-linux-musl-openssl-3.0.x.so.node
 
 EXPOSE 3000
 

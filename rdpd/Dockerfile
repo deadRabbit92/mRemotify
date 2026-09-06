@@ -1,11 +1,11 @@
 # syntax=docker/dockerfile:1
 #
 # Multi-stage build for rdpd — custom RDP daemon using xfreerdp3 + Xvfb.
-# Uses Ubuntu 24.04 for both stages since freerdp3-x11 is only in Ubuntu repos.
+# Uses Ubuntu 26.04 LTS for both stages since freerdp3-x11 is only in Ubuntu repos.
 #
 
 # ---- Build stage ----
-FROM ubuntu:24.04 AS builder
+FROM ubuntu:26.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -30,7 +30,7 @@ COPY rdpd/src ./src
 RUN cargo build --release
 
 # ---- Runtime stage ----
-FROM ubuntu:24.04
+FROM ubuntu:26.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 

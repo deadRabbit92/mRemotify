@@ -16,5 +16,8 @@ docker-compose.prod.yml
 
 .claude/
 
+# Prisma 7 generates the client as TypeScript source at build time
+backend/src/generated/
+
 # Rust build artifacts
 target/

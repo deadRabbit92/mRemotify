@@ -163,7 +163,7 @@ export const SessionTabs: React.FC = () => {
     <Tabs
       type="editable-card"
       hideAdd
-      destroyInactiveTabPane={false}
+      destroyOnHidden={false}
       activeKey={activeSessionId ?? undefined}
       onChange={setActiveSession}
       renderTabBar={renderTabBar}

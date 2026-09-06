@@ -2,10 +2,10 @@
  * Database seed — run with `tsx src/seed.ts` locally or `node dist/seed.js` in Docker.
  * Creates the initial admin user if one does not already exist.
  */
-import { PrismaClient } from '@prisma/client';
 import { hash as bcryptHash } from 'bcryptjs';
+import { createPrismaClient } from './plugins/prisma.js';
 
-const prisma = new PrismaClient();
+const prisma = createPrismaClient();
 
 async function main() {
   const username = process.env.ADMIN_USER || 'admin';

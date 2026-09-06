@@ -1,5 +1,4 @@
 import { FastifyInstance, FastifyRequest } from 'fastify';
-import { SocketStream } from '@fastify/websocket';
 import { WebSocket } from 'ws';
 import { Client as SshClient, ConnectConfig } from 'ssh2';
 import { resolveCredentials } from '../utils/resolveCredentials';
@@ -19,9 +18,7 @@ export async function sshWebsocket(fastify: FastifyInstance) {
   fastify.get(
     '/ws/ssh/:connectionId',
     { websocket: true },
-    async (connection: SocketStream, request: FastifyRequest) => {
-      const socket = connection.socket;
-
+    async (socket: WebSocket, request: FastifyRequest) => {
       // --- Auth via ?token= query param ---
       const query = request.query as { token?: string };
       let userId: string;

@@ -1,5 +1,4 @@
 import { FastifyInstance, FastifyRequest } from 'fastify';
-import { SocketStream } from '@fastify/websocket';
 import { WebSocket } from 'ws';
 import { resolveCredentials } from '../utils/resolveCredentials';
 
@@ -16,9 +15,7 @@ export async function rdpWebsocket(fastify: FastifyInstance) {
   fastify.get(
     '/ws/rdp/:connectionId',
     { websocket: true },
-    async (connection: SocketStream, request: FastifyRequest) => {
-      const socket = connection.socket;
-
+    async (socket: WebSocket, request: FastifyRequest) => {
       // --- Auth ---
       const query = request.query as { token?: string };
       let userId: string;
