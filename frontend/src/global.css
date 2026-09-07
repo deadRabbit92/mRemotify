@@ -68,19 +68,24 @@ body {
 
 /* ── Ant Design overrides ── */
 
-/* Tabs */
+/* Tabs
+   antd 6 renamed the panel DOM: content-holder → body-holder, the pane list
+   content → body, and the individual tabpane → content. This chain is what
+   lets a session fill its pane; without it the pane collapses and xterm's
+   FitAddon measures a parent with no real height, so the terminal renders at
+   its intrinsic size and leaves the bottom of the window blank. */
 .ant-tabs.ant-tabs-top {
   display: flex;
   flex-direction: column;
 }
-.ant-tabs-content-holder {
+.ant-tabs-body-holder {
   flex: 1;
   overflow: hidden;
 }
-.ant-tabs-content {
+.ant-tabs-body {
   height: 100%;
 }
-.ant-tabs-tabpane {
+.ant-tabs-content {
   height: 100%;
 }
 
@@ -197,7 +202,7 @@ body {
 }
 [data-theme="dark"] .ant-input,
 [data-theme="dark"] .ant-input-affix-wrapper,
-[data-theme="dark"] .ant-select-selector,
+[data-theme="dark"] .ant-select,
 [data-theme="dark"] .ant-input-number {
   background: var(--mr-bg-input) !important;
   border-color: var(--mr-border) !important;
@@ -238,7 +243,7 @@ body {
 [data-theme="dark"] .ant-tabs-ink-bar {
   background: var(--mr-accent) !important;
 }
-[data-theme="dark"] .ant-modal-content {
+[data-theme="dark"] .ant-modal-container {
   background: var(--mr-bg-surface);
 }
 [data-theme="dark"] .ant-modal-header {
